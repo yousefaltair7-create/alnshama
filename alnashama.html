@@ -242,7 +242,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const ADMIN_PASSWORD = "1234"; // غيّرها لكلمة السر اللي بدك ياها
+const ADMIN_PASSWORD = "AlnshamaIT27"; // غيّرها لكلمة السر اللي بدك ياها
 
 // ------- رابط تخزين البيانات (Google Sheets عن طريق Apps Script) -------
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbwwcPgM93rQ6qBLnc2PYMzEqDbbrLrthWwSInMkPTd5tBrWyDh1d1-4CRx7Lv47S5PS/exec";
@@ -431,14 +431,38 @@ async function loadSubmissions(){
       } else {
         contentHtml = `<div class="q-text">${String(item.content).replace(/</g,"&lt;")}</div>`;
       }
-      div.innerHTML = `
+          div.innerHTML = `
         <div class="meta">
           <span class="name">${String(item.name).replace(/</g,"&lt;")}</span>
           <span class="time">${date}</span>
         </div>
         ${contentHtml}
+        <div style="text-align:left;margin-top:10px;">
+          <button class="del-btn" data-timestamp="${item.timestamp}" style="background:none;border:1.5px solid #b3423b;color:#b3423b;padding:6px 14px;border-radius:8px;font-family:'Tajawal';font-size:13px;cursor:pointer;">🗑 حذف</button>
+        </div>
       `;
       submissionsList.appendChild(div);
+    });
+
+    document.querySelectorAll(".del-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if(!confirm("متأكد إنك بدك تحذف هذا السؤال؟")) return;
+        btn.disabled = true;
+        btn.textContent = "جارِ الحذف...";
+        try{
+          await fetch(SHEET_URL, {
+            method: "POST",
+            headers: {"Content-Type": "text/plain;charset=utf-8"},
+            body: JSON.stringify({action: "delete", timestamp: btn.dataset.timestamp})
+          });
+          loadSubmissions();
+        }catch(err){
+          console.error(err);
+          btn.disabled = false;
+          btn.textContent = "🗑 حذف";
+        }
+      });
+    });
     });
   } catch(err){
     console.error(err);
