@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>النشامى | منصة أسئلة الطلاب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0f2540;
+    --blue:#1e5b96;
+    --blue-light:#4f8ecb;
+    --silver:#c7ced6;
+    --silver-light:#eef1f4;
+    --silver-dark:#8d97a3;
+    --white:#ffffff;
+    --danger:#b3423b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Tajawal', sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(79,142,203,.25), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(199,206,214,.35), transparent 45%),
+      linear-gradient(160deg, var(--navy) 0%, var(--blue) 45%, var(--silver-dark) 100%);
+    color:var(--navy);
+    padding:32px 16px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  .top{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand svg{width:42px;height:42px;flex-shrink:0;}
+  .brand h1{
+    font-family:'Cairo',sans-serif;font-weight:900;font-size:26px;color:var(--white);
+    margin:0;letter-spacing:.5px;
+  }
+  .brand span{display:block;font-size:12.5px;color:var(--silver-light);font-weight:500;margin-top:2px;}
+  .admin-btn{
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.35);
+    color:var(--white);
+    padding:9px 16px;border-radius:999px;font-family:'Tajawal';font-size:13.5px;
+    cursor:pointer;transition:.2s;white-space:nowrap;
+  }
+  .admin-btn:hover{background:rgba(255,255,255,.22);}
+
+  .card{
+    background:var(--white);
+    border-radius:20px;
+    box-shadow:0 20px 50px rgba(15,37,64,.35);
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.4);
+  }
+  .card-head{
+    background:linear-gradient(120deg,var(--navy),var(--blue));
+    padding:22px 26px;
+    position:relative;
+  }
+  .card-head h2{
+    font-family:'Cairo';color:var(--white);margin:0 0 4px;font-size:20px;font-weight:700;
+  }
+  .card-head p{color:var(--silver-light);margin:0;font-size:13.5px;opacity:.9;}
+  .card-body{padding:26px;}
+
+  label{
+    display:block;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;
+  }
+  input[type=text], textarea{
+    width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--silver);
+    font-family:'Tajawal';font-size:15px;color:var(--navy);background:var(--silver-light);
+    outline:none;transition:.2s;resize:vertical;
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--blue);background:var(--white);}
+  .field{margin-bottom:20px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tab{
+    flex:1;text-align:center;padding:10px;border-radius:10px;
+    border:1.5px solid var(--silver);background:var(--silver-light);
+    cursor:pointer;font-weight:700;font-size:14px;color:var(--silver-dark);
+    transition:.2s;
+  }
+  .tab.active{background:var(--blue);border-color:var(--blue);color:var(--white);}
+
+  .dropzone{
+    border:2px dashed var(--silver);border-radius:12px;padding:26px;text-align:center;
+    background:var(--silver-light);cursor:pointer;transition:.2s;
+  }
+  .dropzone:hover{border-color:var(--blue-light);}
+  .dropzone p{margin:6px 0 0;color:var(--silver-dark);font-size:13.5px;}
+  #preview{max-width:100%;max-height:220px;border-radius:10px;margin-top:12px;display:none;}
+
+  .submit-btn{
+    width:100%;padding:15px;border:none;border-radius:12px;
+    background:linear-gradient(120deg,var(--blue),var(--navy));
+    color:var(--white);font-family:'Cairo';font-weight:700;font-size:16px;
+    cursor:pointer;margin-top:6px;transition:.2s;
+  }
+  .submit-btn:hover{filter:brightness(1.08);}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--navy);color:var(--white);padding:13px 22px;border-radius:999px;
+    font-size:14px;opacity:0;transition:.35s;pointer-events:none;box-shadow:0 10px 25px rgba(0,0,0,.3);
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.err{background:var(--danger);}
+
+  /* admin view */
+  .hidden{display:none !important;}
+  .sub-item{
+    border:1px solid var(--silver);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--silver-light);
+  }
+  .sub-item .meta{display:flex;justify-content:space-between;margin-bottom:8px;}
+  .sub-item .name{font-weight:700;color:var(--navy);font-family:'Cairo';}
+  .sub-item .time{font-size:12px;color:var(--silver-dark);}
+  .sub-item img{max-width:100%;border-radius:8px;margin-top:6px;}
+  .sub-item .q-text{font-size:14.5px;color:var(--navy);line-height:1.6;}
+  .empty-msg{text-align:center;color:var(--silver-dark);padding:30px 0;font-size:14px;}
+  .back-link{color:var(--blue);cursor:pointer;font-weight:700;font-size:14px;display:inline-block;margin-bottom:14px;}
+
+  /* نافذة كلمة سر المعلم */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(15,37,64,.55);
+    display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;
+  }
+  .modal-box{
+    background:var(--white);border-radius:16px;padding:26px;max-width:340px;width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+  }
+  .modal-box h3{font-family:'Cairo';margin:0 0 6px;color:var(--navy);font-size:18px;}
+  .modal-box p{margin:0 0 14px;color:var(--silver-dark);font-size:13.5px;}
+  .modal-box input{
+    width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--silver);
+    font-family:'Tajawal';font-size:15px;outline:none;margin-bottom:8px;
+  }
+  .modal-box input:focus{border-color:var(--blue);}
+  .modal-err{color:var(--danger);font-size:13px;margin-bottom:8px;}
+  .modal-actions{display:flex;gap:10px;margin-top:8px;}
+  .modal-actions button{
+    flex:1;padding:11px;border-radius:10px;border:none;font-family:'Tajawal';font-weight:700;
+    font-size:14px;cursor:pointer;
+  }
+  .modal-cancel{background:var(--silver-light);color:var(--navy);}
+  .modal-ok{background:var(--blue);color:var(--white);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="23" fill="#eef1f4" stroke="#c7ced6" stroke-width="2"/>
+        <path d="M24 10 L30 20 L24 17 L18 20 Z" fill="#1e5b96"/>
+        <rect x="15" y="24" width="18" height="10" rx="2" fill="#0f2540"/>
+        <path d="M15 24 L24 19 L33 24" stroke="#1e5b96" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>النشامى</h1>
+        <span>منصة أسئلة الطلاب</span>
+      </div>
+    </div>
+    <button class="admin-btn" id="adminToggle">لوحة المعلم</button>
+  </div>
+
+  <!-- شاشة الطالب -->
+  <div class="card" id="studentView">
+    <div class="card-head">
+      <h2>عندك سؤال؟ شاركنا فيه</h2>
+      <p>اكتب اسمك وسؤالك، سواء كتابة أو صورة، وخذ راحتك بالكتابة</p>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label for="studentName">اسمك</label>
+        <input type="text" id="studentName" placeholder="مثال: أحمد الزعبي">
+      </div>
+
+      <div class="field">
+        <label>نوع السؤال</label>
+        <div class="tabs">
+          <div class="tab active" data-type="text">سؤال مكتوب</div>
+          <div class="tab" data-type="image">سؤال بصورة</div>
+        </div>
+
+        <div id="textInputWrap">
+          <textarea id="questionText" rows="7" placeholder="اكتب سؤالك هنا بالتفصيل... خذ راحتك، اكتب قد ما تحتاج"></textarea>
+        </div>
+
+        <div id="imageInputWrap" class="hidden">
+          <div class="dropzone" id="dropzone">
+            <div>📎</div>
+            <p>اضغط هنا لاختيار صورة السؤال</p>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" class="hidden">
+          <img id="preview">
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn">إرسال السؤال</button>
+    </div>
+  </div>
+
+  <!-- شاشة المعلم -->
+  <div class="card hidden" id="adminView">
+    <div class="card-head">
+      <h2>الأسئلة الواردة</h2>
+      <p>كل الأسئلة اللي أرسلها الطلاب عبر الرابط</p>
+    </div>
+    <div class="card-body">
+      <span class="back-link" id="backBtn">→ رجوع لصفحة الطالب</span>
+      <div id="submissionsList"><div class="empty-msg">جارِ التحميل...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- نافذة كلمة سر المعلم -->
+<div class="modal-overlay hidden" id="passModal">
+  <div class="modal-box">
+    <h3>دخول المعلم</h3>
+    <p>أدخل كلمة السر للوصول للأسئلة</p>
+    <input type="password" id="passInput" placeholder="كلمة السر">
+    <div class="modal-err hidden" id="passErr">كلمة السر غلط، حاول مرة ثانية</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="passCancel">إلغاء</button>
+      <button class="modal-ok" id="passOk">دخول</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ADMIN_PASSWORD = "1234"; // غيّرها لكلمة السر اللي بدك ياها
+
+// ------- رابط تخزين البيانات (Google Sheets عن طريق Apps Script) -------
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbwwcPgM93rQ6qBLnc2PYMzEqDbbrLrthWwSInMkPTd5tBrWyDh1d1-4CRx7Lv47S5PS/exec";
+
+// ------- إعدادات إشعار تيليجرام -------
+// حط توكن البوت والـ chat_id تبعك هون (اشرحلك الخطوات بالرد)
+const TELEGRAM_BOT_TOKEN = "8611068009:AAH2xF0RoCo6F6ej4R0ui7pwKptYNI_II4A"; // مثال: "123456789:ABCdefGhIJKlmNoPQRstuVWXyz"
+const TELEGRAM_CHAT_ID = "1020225996";   // مثال: "987654321"
+
+async function sendTelegramNotification(sub){
+  if(!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return; // ما انضبط البوت لسا
+  const msg = sub.type === "text"
+    ? `📩 سؤال جديد من: ${sub.name}\n\n${sub.content}`
+    : `📩 سؤال جديد (صورة) من: ${sub.name}`;
+  try{
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({chat_id: TELEGRAM_CHAT_ID, text: msg})
+    });
+  }catch(e){
+    console.error("تعذر إرسال إشعار تيليجرام", e);
+  }
+}
+
+let currentType = "text";
+let imageDataUrl = null;
+
+const tabs = document.querySelectorAll(".tab");
+const textWrap = document.getElementById("textInputWrap");
+const imageWrap = document.getElementById("imageInputWrap");
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+const toast = document.getElementById("toast");
+
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentType = tab.dataset.type;
+    if(currentType === "text"){
+      textWrap.classList.remove("hidden");
+      imageWrap.classList.add("hidden");
+    } else {
+      textWrap.classList.add("hidden");
+      imageWrap.classList.remove("hidden");
+    }
+  });
+});
+
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    imageDataUrl = reader.result;
+    preview.src = imageDataUrl;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+});
+
+function showToast(msg, isErr){
+  toast.textContent = msg;
+  toast.classList.toggle("err", !!isErr);
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  const name = document.getElementById("studentName").value.trim();
+  const text = document.getElementById("questionText").value.trim();
+
+  if(!name){ showToast("لازم تكتب اسمك أولاً", true); return; }
+  if(currentType === "text" && !text){ showToast("لازم تكتب السؤال", true); return; }
+  if(currentType === "image" && !imageDataUrl){ showToast("لازم تختار صورة للسؤال", true); return; }
+
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "جارِ الإرسال...";
+
+  const submission = {
+    name,
+    type: currentType,
+    content: currentType === "text" ? text : imageDataUrl,
+    timestamp: new Date().toISOString()
+  };
+
+
+  try{
+    await fetch(SHEET_URL, {
+      method: "POST",
+      headers: {"Content-Type": "text/plain;charset=utf-8"},
+      body: JSON.stringify(submission)
+    });
+    sendTelegramNotification(submission);
+    showToast("تم إرسال سؤالك بنجاح ✓");
+    document.getElementById("studentName").value = "";
+    document.getElementById("questionText").value = "";
+    imageDataUrl = null;
+    preview.style.display = "none";
+    fileInput.value = "";
+  } catch(err){
+    console.error(err);
+    showToast("صار خطأ بالإرسال، جرّب مرة ثانية", true);
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = "إرسال السؤال";
+});
+
+// ------- لوحة المعلم -------
+const studentView = document.getElementById("studentView");
+const adminView = document.getElementById("adminView");
+const adminToggle = document.getElementById("adminToggle");
+const backBtn = document.getElementById("backBtn");
+const submissionsList = document.getElementById("submissionsList");
+
+const passModal = document.getElementById("passModal");
+const passInput = document.getElementById("passInput");
+const passErr = document.getElementById("passErr");
+const passOk = document.getElementById("passOk");
+const passCancel = document.getElementById("passCancel");
+
+function openAdminModal(){
+  passInput.value = "";
+  passErr.classList.add("hidden");
+  passModal.classList.remove("hidden");
+  passInput.focus();
+}
+
+function closeAdminModal(){
+  passModal.classList.add("hidden");
+}
+
+function enterAdmin(){
+  if(passInput.value === ADMIN_PASSWORD){
+    closeAdminModal();
+    studentView.classList.add("hidden");
+    adminView.classList.remove("hidden");
+    adminToggle.classList.add("hidden");
+    loadSubmissions();
+  } else {
+    passErr.classList.remove("hidden");
+    passInput.value = "";
+    passInput.focus();
+  }
+}
+
+adminToggle.addEventListener("click", openAdminModal);
+passCancel.addEventListener("click", closeAdminModal);
+passOk.addEventListener("click", enterAdmin);
+passInput.addEventListener("keydown", (e) => {
+  if(e.key === "Enter") enterAdmin();
+});
+
+backBtn.addEventListener("click", () => {
+  adminView.classList.add("hidden");
+  studentView.classList.remove("hidden");
+  adminToggle.classList.remove("hidden");
+});
+
+async function loadSubmissions(){
+  submissionsList.innerHTML = '<div class="empty-msg">جارِ التحميل...</div>';
+  try{
+    const res = await fetch(SHEET_URL);
+    const items = await res.json();
+
+    if(!items || items.length === 0){
+      submissionsList.innerHTML = '<div class="empty-msg">ما في أسئلة لسا</div>';
+      return;
+    }
+
+    items.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    submissionsList.innerHTML = "";
+    items.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "sub-item";
+      const date = new Date(item.timestamp).toLocaleString("ar-JO");
+      let contentHtml = "";
+      if(item.type === "image"){
+        contentHtml = `<img src="${item.content}">`;
+      } else {
+        contentHtml = `<div class="q-text">${String(item.content).replace(/</g,"&lt;")}</div>`;
+      }
+      div.innerHTML = `
+        <div class="meta">
+          <span class="name">${String(item.name).replace(/</g,"&lt;")}</span>
+          <span class="time">${date}</span>
+        </div>
+        ${contentHtml}
+      `;
+      submissionsList.appendChild(div);
+    });
+  } catch(err){
+    console.error(err);
+    submissionsList.innerHTML = '<div class="empty-msg">صار خطأ بتحميل الأسئلة</div>';
+  }
+}
+</script>
+</body>
+</html>
