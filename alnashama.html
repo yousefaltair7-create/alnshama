@@ -115,7 +115,6 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .toast.err{background:var(--danger);}
 
-  /* admin view */
   .hidden{display:none !important;}
   .sub-item{
     border:1px solid var(--silver);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--silver-light);
@@ -135,7 +134,6 @@
   .del-btn:hover{background:var(--danger);color:var(--white);}
   .del-btn:disabled{opacity:.5;cursor:not-allowed;}
 
-  /* نافذة كلمة سر المعلم */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(15,37,64,.55);
     display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;
@@ -180,7 +178,6 @@
     <button class="admin-btn" id="adminToggle">لوحة المعلم</button>
   </div>
 
-  <!-- شاشة الطالب -->
   <div class="card" id="studentView">
     <div class="card-head">
       <h2>عندك سؤال؟ شاركنا فيه</h2>
@@ -217,7 +214,6 @@
     </div>
   </div>
 
-  <!-- شاشة المعلم -->
   <div class="card hidden" id="adminView">
     <div class="card-head">
       <h2>الأسئلة الواردة</h2>
@@ -231,7 +227,6 @@
 
 </div>
 
-<!-- نافذة كلمة سر المعلم -->
 <div class="modal-overlay hidden" id="passModal">
   <div class="modal-box">
     <h3>دخول المعلم</h3>
@@ -248,31 +243,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const ADMIN_PASSWORD = "AlnshamaIT27"; // غيّرها لكلمة السر اللي بدك ياها
-
-// ------- رابط تخزين البيانات (Google Sheets عن طريق Apps Script) -------
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbwwcPgM93rQ6qBLnc2PYMzEqDbbrLrthWwSInMkPTd5tBrWyDh1d1-4CRx7Lv47S5PS/exec";
-
-// ------- إعدادات إشعار تيليجرام -------
-// حط توكن البوت والـ chat_id تبعك هون (اشرحلك الخطوات بالرد)
-const TELEGRAM_BOT_TOKEN = "8611068009:AAH2xF0RoCo6F6ej4R0ui7pwKptYNI_II4A"; // مثال: "123456789:ABCdefGhIJKlmNoPQRstuVWXyz"
-const TELEGRAM_CHAT_ID = "1020225996";   // مثال: "987654321"
-
-async function sendTelegramNotification(sub){
-  if(!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return; // ما انضبط البوت لسا
-  const msg = sub.type === "text"
-    ? `📩 سؤال جديد من: ${sub.name}\n\n${sub.content}`
-    : `📩 سؤال جديد (صورة) من: ${sub.name}`;
-  try{
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({chat_id: TELEGRAM_CHAT_ID, text: msg})
-    });
-  }catch(e){
-    console.error("تعذر إرسال إشعار تيليجرام", e);
-  }
-}
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbx8ahX2ROexWiGtr-DZ7NASe73gSgmziz505Ile5XrLgziqTaJ2IKnnS8EvzXcPxDGe/exec";
 
 let currentType = "text";
 let imageDataUrl = null;
@@ -345,7 +316,6 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
       headers: {"Content-Type": "text/plain;charset=utf-8"},
       body: JSON.stringify(submission)
     });
-    sendTelegramNotification(submission);
     showToast("تم إرسال سؤالك بنجاح ✓");
     document.getElementById("studentName").value = "";
     document.getElementById("questionText").value = "";
@@ -361,7 +331,6 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   submitBtn.textContent = "إرسال السؤال";
 });
 
-// ------- لوحة المعلم -------
 const studentView = document.getElementById("studentView");
 const adminView = document.getElementById("adminView");
 const adminToggle = document.getElementById("adminToggle");
@@ -374,6 +343,8 @@ const passErr = document.getElementById("passErr");
 const passOk = document.getElementById("passOk");
 const passCancel = document.getElementById("passCancel");
 
+let adminPassword = "";
+
 function openAdminModal(){
   passInput.value = "";
   passErr.classList.add("hidden");
@@ -385,18 +356,31 @@ function closeAdminModal(){
   passModal.classList.add("hidden");
 }
 
-function enterAdmin(){
-  if(passInput.value === ADMIN_PASSWORD){
-    closeAdminModal();
-    studentView.classList.add("hidden");
-    adminView.classList.remove("hidden");
-    adminToggle.classList.add("hidden");
-    loadSubmissions();
-  } else {
+async function enterAdmin(){
+  const enteredPassword = passInput.value;
+  passOk.disabled = true;
+  passOk.textContent = "جارِ التحقق...";
+  try{
+    const res = await fetch(SHEET_URL + "?password=" + encodeURIComponent(enteredPassword));
+    const data = await res.json();
+    if(data && data.result === "unauthorized"){
+      passErr.classList.remove("hidden");
+      passInput.value = "";
+      passInput.focus();
+    } else {
+      adminPassword = enteredPassword;
+      closeAdminModal();
+      studentView.classList.add("hidden");
+      adminView.classList.remove("hidden");
+      adminToggle.classList.add("hidden");
+      renderSubmissions(data);
+    }
+  }catch(err){
+    console.error(err);
     passErr.classList.remove("hidden");
-    passInput.value = "";
-    passInput.focus();
   }
+  passOk.disabled = false;
+  passOk.textContent = "دخول";
 }
 
 adminToggle.addEventListener("click", openAdminModal);
@@ -412,66 +396,69 @@ backBtn.addEventListener("click", () => {
   adminToggle.classList.remove("hidden");
 });
 
-async function loadSubmissions(){
+async function reloadSubmissions(){
   submissionsList.innerHTML = '<div class="empty-msg">جارِ التحميل...</div>';
   try{
-    const res = await fetch(SHEET_URL);
+    const res = await fetch(SHEET_URL + "?password=" + encodeURIComponent(adminPassword));
     const items = await res.json();
-
-    if(!items || items.length === 0){
-      submissionsList.innerHTML = '<div class="empty-msg">ما في أسئلة لسا</div>';
-      return;
-    }
-
-    items.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    submissionsList.innerHTML = "";
-    items.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "sub-item";
-      const date = new Date(item.timestamp).toLocaleString("ar-JO");
-      let contentHtml = "";
-      if(item.type === "image"){
-        contentHtml = `<img src="${item.content}">`;
-      } else {
-        contentHtml = `<div class="q-text">${String(item.content).replace(/</g,"&lt;")}</div>`;
-      }
-      div.innerHTML = `
-        <div class="meta">
-          <span class="name">${String(item.name).replace(/</g,"&lt;")}</span>
-          <span class="time">${date}</span>
-        </div>
-        ${contentHtml}
-        <div class="del-row">
-          <button class="del-btn" data-timestamp="${item.timestamp}">🗑 حذف</button>
-        </div>
-      `;
-      submissionsList.appendChild(div);
-    });
-
-    document.querySelectorAll(".del-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        if(!confirm("متأكد إنك بدك تحذف هذا السؤال؟")) return;
-        btn.disabled = true;
-        btn.textContent = "جارِ الحذف...";
-        try{
-          await fetch(SHEET_URL, {
-            method: "POST",
-            headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({action: "delete", timestamp: btn.dataset.timestamp})
-          });
-          loadSubmissions();
-        }catch(err){
-          console.error(err);
-          btn.disabled = false;
-          btn.textContent = "🗑 حذف";
-        }
-      });
-    });
+    renderSubmissions(items);
   } catch(err){
     console.error(err);
     submissionsList.innerHTML = '<div class="empty-msg">صار خطأ بتحميل الأسئلة</div>';
   }
+}
+
+function renderSubmissions(items){
+  if(!items || items.result === "unauthorized" || items.length === 0){
+    submissionsList.innerHTML = '<div class="empty-msg">ما في أسئلة لسا</div>';
+    return;
+  }
+
+  items.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  submissionsList.innerHTML = "";
+  items.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "sub-item";
+    const date = new Date(item.timestamp).toLocaleString("ar-JO");
+    let contentHtml = "";
+    if(item.type === "image"){
+      contentHtml = `<img src="${item.content}">`;
+    } else {
+      contentHtml = `<div class="q-text">${String(item.content).replace(/</g,"&lt;")}</div>`;
+    }
+    div.innerHTML = `
+      <div class="meta">
+        <span class="name">${String(item.name).replace(/</g,"&lt;")}</span>
+        <span class="time">${date}</span>
+      </div>
+      ${contentHtml}
+      <div class="del-row">
+        <button class="del-btn" data-timestamp="${item.timestamp}">🗑 حذف</button>
+      </div>
+    `;
+    submissionsList.appendChild(div);
+  });
+
+  document.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if(!confirm("متأكد إنك بدك تحذف هذا السؤال؟")) return;
+      btn.disabled = true;
+      btn.textContent = "جارِ الحذف...";
+      try{
+        await fetch(SHEET_URL, {
+          method: "POST",
+          headers: {"Content-Type": "text/plain;charset=utf-8"},
+          body: JSON.stringify({action: "delete", timestamp: btn.dataset.timestamp, password: adminPassword})
+        });
+        reloadSubmissions();
+      }catch(err){
+        console.error(err);
+        btn.disabled = false;
+        btn.textContent = "🗑 حذف";
+      }
+    });
+  });
 }
 </script>
 </body>
